@@ -11,10 +11,20 @@ load_dotenv()
 proxies = {'https': os.getenv('SMARTPROXY'), 'http': os.getenv('SMARTPROXY_HTTP')}
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel("gemini-1.5-flash")
 
-print('GEMINI_API_KEY', GEMINI_API_KEY,
-      'SMARTPROXY', proxies)
+
+# Load environment variables
+load_dotenv()
+import requests
+url = 'https://ip.smartproxy.com/json'
+username = 'spv47vc15k'
+password = 'vntmSu4JjOAo1c+36v'
+proxy = f"http://{username}:{password}@gate.smartproxy.com:7000"
+proxies = {
+    'http': proxy,
+    'https': proxy,
+}
+response = requests.get(url, proxies=proxies)
 
 # Prompts
 prompt = '''
@@ -116,6 +126,9 @@ class Transcript:
         )
         return response.text
 
+
+st.write(response.text)
+
 st.title('YouTube Transcriber')
 st.write('Enter a YouTube URL to get a transcript and summary')
 
@@ -127,13 +140,19 @@ if 'languages' not in st.session_state:
 if 'current_tab' not in st.session_state:
     st.session_state.current_tab = 'Transcript'
 
+if st.button('Get Transcript (basic)'):
+    video_id = 'JFctWXEzFZw'
+    transcript = YouTubeTranscriptApi.list_transcripts(video_id, proxies=proxies)
+    st.write(transcript)
+
 # URL input
 url = st.text_input('Enter YouTube URL...')
 if st.button('Try getting a transcript'):
     with st.spinner('Fetching transcript...'):
         print('using proxies', proxies, 'it should print out!')
         try:
-            transcript = YouTubeTranscriptApi.get_transcript(st.session_state.transcript.strip_url(url), proxies={'https:': 'https://spv47vc15k:vntmSu4JjOAo1c+36v@gate.smartproxy.com:7000'})
+            st.write(st.session_state.transcript.strip_url(url))
+            transcript = YouTubeTranscriptApi.get_transcript(st.session_state.transcript.strip_url(url), proxies=proxies)
             st.write(transcript)
         except Exception as e:
             st.error(f'Error fetching transcript: {e}')
@@ -148,40 +167,3 @@ if st.button('Submit'):
             st.success('Transcript fetched successfully!')
         except Exception as e:
             st.error(f'Error fetching transcript: {e}')
-
-# Language selection
-selected_language = st.selectbox(
-    'Select Language',
-    options=st.session_state.languages
-)
-
-if st.button('Get Transcript'):
-    with st.spinner('Processing transcript...'):
-        selected_transcript = st.session_state.transcript.get_transcript(selected_language)
-        if selected_transcript:
-            transcript_data = selected_transcript.fetch()
-            st.session_state.transcript.formatted_transcript = st.session_state.transcript.format_transcript(transcript_data)
-            st.session_state.transcript.summary = st.session_state.transcript.summarize_transcript(
-                st.session_state.transcript.formatted_transcript
-            )
-
-# Tabs
-tab1, tab2, tab3 = st.tabs(['Transcript', 'Summary', 'Q&A'])
-
-with tab1:
-    if st.session_state.transcript.formatted_transcript != '...transcript will appear here...':
-        st.markdown(st.session_state.transcript.formatted_transcript)
-
-with tab2:
-    if st.session_state.transcript.summary != '...summary will appear here...':
-        st.markdown(st.session_state.transcript.summary)
-
-with tab3:
-    question = st.text_input('Ask a question about the transcript...')
-    if st.button('Ask'):
-        if st.session_state.transcript.formatted_transcript != '...transcript will appear here...':
-            with st.spinner('Getting answer...'):
-                answer = st.session_state.transcript.ask_question(question)
-                st.markdown(answer)
-        else:
-            st.warning('Please fetch a transcript first!')
