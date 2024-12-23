@@ -6,7 +6,12 @@ import google.generativeai as genai
 import os
 from dotenv import load_dotenv
 
-model = genai.GenerativeModel("gemini-1.5-flash")
+# Load environment variables
+load_dotenv()
+proxies = {'https': os.getenv('SMARTPROXY'), 'http': os.getenv('SMARTPROXY_HTTP')}
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+genai.configure(api_key=GEMINI_API_KEY)
+
 
 # Load environment variables
 load_dotenv()
