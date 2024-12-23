@@ -146,7 +146,8 @@ if st.button('Try getting a transcript'):
     with st.spinner('Fetching transcript...'):
         print('using proxies', proxies, 'it should print out!')
         try:
-            transcript = YouTubeTranscriptApi.get_transcript(st.session_state.transcript.strip_url(url), proxies={'https:': 'https://spv47vc15k:vntmSu4JjOAo1c+36v@gate.smartproxy.com:7000'})
+            st.write(st.session_state.transcript.strip_url(url))
+            transcript = YouTubeTranscriptApi.get_transcript(st.session_state.transcript.strip_url(url), proxies=proxies)
             st.write(transcript)
         except Exception as e:
             st.error(f'Error fetching transcript: {e}')
