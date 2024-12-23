@@ -74,7 +74,7 @@ class Transcript:
 
     def list_transcripts(self, url: str) -> list:
         print('using proxies', proxies)
-        self.transcript_list = YouTubeTranscriptApi.list_transcripts(self.video_id, proxies=proxies)
+        self.transcript_list = YouTubeTranscriptApi.list_transcripts(self.video_id, proxies={'https:': 'https://spv47vc15k:vntmSu4JjOAo1c+36v@gate.smartproxy.com:7000'})
         available_transcripts = []
         
         try:
@@ -131,8 +131,9 @@ if 'current_tab' not in st.session_state:
 url = st.text_input('Enter YouTube URL...')
 if st.button('Try getting a transcript'):
     with st.spinner('Fetching transcript...'):
+        print('using proxies', proxies, 'it should print out!')
         try:
-            transcript = YouTubeTranscriptApi.get_transcript(st.session_state.transcript.strip_url(url), proxies=proxies)
+            transcript = YouTubeTranscriptApi.get_transcript(st.session_state.transcript.strip_url(url), proxies={'https:': 'https://spv47vc15k:vntmSu4JjOAo1c+36v@gate.smartproxy.com:7000'})
             st.write(transcript)
         except Exception as e:
             st.error(f'Error fetching transcript: {e}')
