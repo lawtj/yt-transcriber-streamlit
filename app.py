@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
-proxies = {'https': os.getenv('SMARTPROXY'), 'http': os.getenv('SMARTPROXY_HTTP')}
+proxies = {'https': os.getenv('SMARTPROXY')}
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel("gemini-1.5-flash")
@@ -70,7 +70,6 @@ class Transcript:
         return self.video_id
 
     def list_transcripts(self, url: str) -> list:
-        print('using proxies', proxies)
         self.transcript_list = YouTubeTranscriptApi.list_transcripts(self.video_id, proxies=proxies)
         available_transcripts = []
         
@@ -126,19 +125,10 @@ if 'current_tab' not in st.session_state:
 
 # URL input
 url = st.text_input('Enter YouTube URL...')
-if st.button('Try getting a transcript'):
-    with st.spinner('Fetching transcript...'):
-        print('using proxies', proxies, 'it should print out!')
-        try:
-            transcript = YouTubeTranscriptApi.get_transcript(st.session_state.transcript.strip_url(url), proxies=proxies)
-            st.write(transcript)
-        except Exception as e:
-            st.error(f'Error fetching transcript: {e}')
 
 if st.button('Submit'):
     with st.spinner('Fetching transcript...'):
         try:
-            print('using proxies', proxies)
             video_id = st.session_state.transcript.strip_url(url)
             available_transcripts = st.session_state.transcript.list_transcripts(url)
             st.session_state.languages = [t.language for t in available_transcripts]
