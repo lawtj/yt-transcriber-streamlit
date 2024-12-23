@@ -21,7 +21,7 @@ response = requests.get(url, proxies=proxies)
 
 st.write(response.text)
 
-from youtube_transcript_api import YouTubeTranscriptApi
-video_id = 'JFctWXEzFZw'
-transcript = YouTubeTranscriptApi.get_transcript(video_id, proxies=proxies)
-st.write(transcript)
+if st.button('Get Transcript'):
+    video_id = 'JFctWXEzFZw'
+    transcript = YouTubeTranscriptApi.get_transcript(video_id, proxies=proxies)
+    st.write(transcript)
