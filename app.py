@@ -4,10 +4,16 @@ from youtube_transcript_api.formatters import TextFormatter
 from youtube_transcript_api._errors import NoTranscriptFound
 import google.generativeai as genai
 import os
+from pocketbase import PocketBase
 from dotenv import load_dotenv
+load_dotenv()
+
+
+client = PocketBase(os.getenv('POCKETBASE_URL'))
+admin_data = client.admins.auth_with_password(os.getenv('POCKETBASE_ADMIN_EMAIL'), os.getenv('POCKETBASE_ADMIN_PASSWORD'))
+
 
 # Load environment variables
-load_dotenv()
 proxies = {'https': os.getenv('SMARTPROXY')}
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 genai.configure(api_key=GEMINI_API_KEY)
@@ -112,6 +118,13 @@ class Transcript:
         )
         return response.text
 
+# check if transcript exists in pocketbase, return transcript and summary if it does
+def check_transcript_exists(video_id: str) -> tuple[str, str]:
+    transcript = client.collection('videos').get_first_list_item(f"video_id = '{video_id}'")
+    if transcript:
+        return transcript.transcript, transcript.summary
+    return None, None
+
 st.title('YouTube Transcriber')
 st.write('Enter a YouTube URL to get a transcript and summary')
 
@@ -130,9 +143,15 @@ if st.button('Submit'):
     with st.spinner('Fetching transcript...'):
         try:
             video_id = st.session_state.transcript.strip_url(url)
-            available_transcripts = st.session_state.transcript.list_transcripts(url)
-            st.session_state.languages = [t.language for t in available_transcripts]
-            st.success('Transcript fetched successfully!')
+            try:
+                transcript, summary = check_transcript_exists(video_id)
+                st.success('Existing transcript found in database!')
+                st.session_state.transcript.formatted_transcript = transcript
+                st.session_state.transcript.summary = summary
+            except:
+                available_transcripts = st.session_state.transcript.list_transcripts(url)
+                st.session_state.languages = [t.language for t in available_transcripts]
+                st.success('Transcript list fetched successfully!')
         except Exception as e:
             st.error(f'Error fetching transcript: {e}')
 
@@ -151,6 +170,16 @@ if st.button('Get Transcript'):
             st.session_state.transcript.summary = st.session_state.transcript.summarize_transcript(
                 st.session_state.transcript.formatted_transcript
             )
+            try:
+                print('Saving transcript to database...')
+                client.collection('videos').create({
+                    'video_id': st.session_state.transcript.video_id,
+                    'transcript': st.session_state.transcript.formatted_transcript,
+                    'summary': st.session_state.transcript.summary
+                })
+                st.success('Transcript saved to database.')
+            except Exception as e:
+                st.error(f'Error saving transcript to database: {e}')
 
 # Tabs
 tab1, tab2, tab3 = st.tabs(['Transcript', 'Summary', 'Q&A'])
