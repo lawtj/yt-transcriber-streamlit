@@ -72,7 +72,13 @@ class Transcript:
     
     def strip_url(self, url: str) -> str:
         # given https://www.youtube.com/watch?v=JFctWXEzFZw, return JFctWXEzFZw
-        self.video_id = url.split('=')[-1]
+        # or given https://youtu.be/JFUvhtT2Nsc?si=KaWhSkBINTJWQWX9, return JFUvhtT2Nsc
+        if 'youtube.com/watch?v=' in url:
+            self.video_id = url.split('v=')[-1].split('&')[0]
+        elif 'youtu.be/' in url:
+            self.video_id = url.split('/')[-1].split('?')[0]
+        else:
+            self.video_id = None
         return self.video_id
 
     def list_transcripts(self, url: str) -> list:
